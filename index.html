@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="antialiased">
 <head>
@@ -80,20 +81,23 @@
         #loader { position: fixed; inset: 0; background: #020202; z-index: 1000; display: flex; justify-content: center; align-items: center; }
         .loader-progress { position: absolute; bottom: 0; left: 0; height: 4px; background: #ff4400; width: 0%; }
 
-        /* --- EFEK CAIRAN (LIQUID) TOMBOL --- */
+        /* ========================================= */
+        /* --- EFEK CAIRAN TOMBOL (ANIMASI JELAS) ---*/
+        /* ========================================= */
         
-        /* Riakan santai (Normal State) - Tidak kaku/kotak */
-        @keyframes liquid-calm {
-            0%, 100% { border-radius: 40px 42px 40px 45px / 45px 40px 42px 40px; }
-            50% { border-radius: 45px 40px 45px 40px / 40px 45px 40px 45px; }
+        /* Riakan santai yang terlihat jelas (Perbedaan px cukup besar agar tidak macet) */
+        @keyframes btn-wobble {
+            0%, 100% { border-radius: 20px 45px 25px 40px / 40px 25px 45px 20px; }
+            33% { border-radius: 45px 20px 40px 25px / 25px 40px 20px 45px; }
+            66% { border-radius: 30px 40px 20px 45px / 45px 20px 40px 30px; }
         }
 
-        /* Riakan kejut saat menu diklik (Splash Transition) */
-        @keyframes liquid-splash {
-            0% { border-radius: 40px; transform: scale(1); }
-            30% { border-radius: 20px 60px 20px 60px / 60px 20px 60px 20px; transform: scale(0.9); }
-            60% { border-radius: 60px 20px 60px 20px / 20px 60px 20px 60px; transform: scale(1.05); }
-            100% { border-radius: 40px; transform: scale(1); }
+        /* Splash Effect (Kejutan air) saat diklik */
+        @keyframes btn-splash {
+            0% { border-radius: 20px 45px 25px 40px / 40px 25px 45px 20px; transform: scale(1); }
+            30% { border-radius: 10px 60px 10px 60px / 60px 10px 60px 10px; transform: scale(0.9); }
+            60% { border-radius: 60px 10px 60px 10px / 10px 60px 10px 60px; transform: scale(1.05); }
+            100% { border-radius: 20px 45px 25px 40px / 40px 25px 45px 20px; transform: scale(1); }
         }
 
         /* Base Tombol Cair */
@@ -108,8 +112,8 @@
                 0 4px 10px rgba(0, 0, 0, 0.15); 
             position: relative;
             overflow: hidden;
-            border-radius: 40px; /* Base shape oval/pil */
-            animation: liquid-calm 4s ease-in-out infinite;
+            /* Hapus border-radius fixed, biarkan keyframe yang bekerja! */
+            animation: btn-wobble 4s ease-in-out infinite;
             transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
             will-change: border-radius, transform;
         }
@@ -120,15 +124,15 @@
                 inset 0 4px 12px -2px rgba(255, 255, 255, 0.8),
                 inset 0 -4px 8px -2px rgba(0, 0, 0, 0.3),
                 0 6px 15px rgba(255, 255, 255, 0.05);
-            animation-duration: 2.5s; /* Riakan sedikit lebih cepat saat dihover */
+            animation-duration: 2s; /* Lebih cepat beriak saat disentuh */
         }
 
-        /* Class ditambahkan sebentar via JS saat diklik */
+        /* Class trigger animasi saat menu diklik */
         .btn-liquid.is-splashing {
-            animation: liquid-splash 0.6s ease-out forwards;
+            animation: btn-splash 0.6s ease-out forwards;
         }
 
-        /* State Menu Terbuka */
+        /* Saat menu terbuka warnanya berubah oranye, riakan kembali normal */
         .btn-liquid.menu-open {
             background: rgba(255, 68, 0, 0.15);
             border-color: rgba(255, 68, 0, 0.5);
@@ -136,20 +140,18 @@
                 inset 0 4px 10px -2px rgba(255, 68, 0, 0.8),
                 inset 0 -4px 8px -2px rgba(0, 0, 0, 0.4),
                 0 6px 20px rgba(255, 68, 0, 0.2);
-            color: #ff4400;
-            animation: liquid-calm 3s ease-in-out infinite; /* Kembali santai tapi warna oranye */
+            animation: btn-wobble 3s ease-in-out infinite; /* Lanjut beriak */
         }
         .btn-liquid.menu-open span { color: #ff4400; font-weight: bold; }
         .btn-liquid:active:not(.is-splashing) { transform: scale(0.95); }
 
-        /* Cair Gelap (Footer) */
+        /* Tombol Gelap (Footer) */
         .btn-liquid-dark {
             background: rgba(0, 0, 0, 0.05);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(0, 0, 0, 0.15);
             box-shadow: inset 0 3px 6px -2px rgba(255, 255, 255, 0.2), inset 0 -3px 6px -2px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 40px;
-            animation: liquid-calm 4.5s ease-in-out infinite reverse;
+            animation: btn-wobble 4.5s ease-in-out infinite reverse;
             transition: all 0.4s ease;
         }
         .btn-liquid-dark:hover {
@@ -158,27 +160,57 @@
             box-shadow: inset 0 4px 10px -2px rgba(255, 255, 255, 0.4), inset 0 -4px 8px -2px rgba(0, 0, 0, 0.8), 0 6px 15px rgba(0, 0, 0, 0.2);
         }
 
-        /* --- STYLING GAMBAR KOTAK + FILTER RIAKAN HALUS --- */
-        .product-image-container {
-            /* Kembali kotak dengan sedikit sudut membulat elegan */
-            border-radius: 6px; 
-            overflow: hidden;
+        /* ========================================= */
+        /* --- EFEK GAMBAR DIBUNGKUS CAIRAN KOTAK ---*/
+        /* ========================================= */
+
+        /* Menggunakan persen kecil agar tetap terlihat kotak, tapi tepiannya goyang seperti air */
+        @keyframes boxy-liquid {
+            0%, 100% { border-radius: 8% 12% 9% 15% / 10% 14% 11% 13%; }
+            33% { border-radius: 13% 9% 14% 10% / 15% 11% 13% 9%; }
+            66% { border-radius: 10% 14% 11% 13% / 9% 12% 10% 15%; }
+        }
+
+        .liquid-image-wrapper {
             position: relative;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-            transform: translateZ(0); 
+            overflow: hidden;
+            /* Shape kotak liquid */
+            animation: boxy-liquid 6s ease-in-out infinite; 
+            /* Cahaya pinggiran air 3D */
+            box-shadow: 
+                inset 0 10px 30px rgba(0,0,0,0.8), 
+                inset 0 -5px 20px rgba(255,255,255,0.1), 
+                0 15px 30px rgba(0,0,0,0.4);
+            transform: translateZ(0);
+            transition: all 0.5s ease;
+            will-change: border-radius;
+        }
+
+        /* Pantulan cahaya cairan */
+        .liquid-image-wrapper::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit;
+            box-shadow: inset 0 2px 15px rgba(255,255,255,0.15); pointer-events: none; z-index: 30; transition: inherit;
+        }
+
+        .product-card:hover .liquid-image-wrapper {
+            animation-duration: 3s; /* Beriak lebih cepat saat mouse masuk */
+            box-shadow: 
+                inset 0 15px 40px rgba(0,0,0,0.9), 
+                inset 0 -5px 25px rgba(255,68,0,0.2), 
+                0 20px 40px rgba(0,0,0,0.5);
         }
 
         .product-image-bg {
+            /* Filter riak bagian dalam gambar (Sangat ringan) */
             filter: url('#water-ripple');
-            transform: scale(1.05); /* Sedikit di-scale agar pinggiran distorsi tersembunyi */
+            transform: scale(1.1); 
             transition: filter 0.8s ease, opacity 0.8s ease, transform 0.8s ease;
-            will-change: filter, transform;
         }
 
         .product-card:hover .product-image-bg {
             filter: url('#water-ripple-hover'); 
-            transform: scale(1.1); /* Efek zoom halus saat dihover */
-            opacity: 0.9;
+            transform: scale(1.15); 
+            opacity: 0.85;
         }
 
         #menu-overlay { clip-path: circle(0% at 100% 0%); transition: clip-path 1s cubic-bezier(0.77, 0, 0.175, 1); }
@@ -188,25 +220,20 @@
 </head>
 <body>
 
-    <!-- FILTER SVG SANGAT RINGAN -->
+    <!-- FILTER SVG RINGAN UNTUK GAMBAR -->
     <svg style="width:0; height:0; position:absolute; z-index:-1;" aria-hidden="true">
         <defs>
-            <!-- Riakan diam/normal -->
             <filter id="water-ripple">
                 <feTurbulence type="fractalNoise" baseFrequency="0.003 0.005" numOctaves="1" result="noise">
-                    <!-- Animasi sangat pelan agar GPU tidak berat -->
                     <animate attributeName="baseFrequency" values="0.003 0.005; 0.004 0.007; 0.003 0.005" dur="10s" repeatCount="indefinite" />
                 </feTurbulence>
                 <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
             </filter>
             
-            <!-- Riakan saat hover -->
             <filter id="water-ripple-hover">
                 <feTurbulence type="fractalNoise" baseFrequency="0.006 0.01" numOctaves="1" result="noise">
-                    <!-- Gerakan sedikit lebih dinamis -->
                     <animate attributeName="baseFrequency" values="0.006 0.01; 0.008 0.012; 0.006 0.01" dur="5s" repeatCount="indefinite" />
                 </feTurbulence>
-                <!-- Scale dibatasi di 8 agar tetap halus dan tidak pecah -->
                 <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
             </filter>
         </defs>
@@ -250,13 +277,14 @@
         
         <div class="hidden md:flex items-center gap-10 font-sans text-xs tracking-[0.2em] uppercase font-medium">
             <a href="#products" class="cursor-hover hover:text-brand transition-colors">Products</a>
-            <a href="#contact" class="magnetic-btn btn-liquid px-6 py-3 cursor-hover flex items-center gap-2 text-white/90 transition-all duration-300">
+            <a href="#contact" class="magnetic-btn btn-liquid px-6 py-3 cursor-hover flex items-center gap-2 text-white/90">
                 Get a Quote
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
         </div>
 
-        <button id="menu-toggle" class="magnetic-btn btn-liquid font-sans uppercase text-xs tracking-widest px-6 py-3 cursor-hover flex items-center gap-2 text-white/90 transition-all duration-300">
+        <!-- Tombol Menu Liquid -->
+        <button id="menu-toggle" class="magnetic-btn btn-liquid font-sans uppercase text-xs tracking-widest px-6 py-3 cursor-hover flex items-center gap-2 text-white/90">
             <span class="transition-colors duration-300 block">Menu</span>
         </button>
     </nav>
@@ -274,6 +302,7 @@
                         100% Premium Coconut Shell Briquettes.<br>Engineered for endurance and purity.
                     </p>
                     <div class="mt-12 flex justify-center fade-in">
+                        <!-- CTA Liquid -->
                         <a href="#products" class="magnetic-btn btn-liquid inline-flex items-center gap-3 px-8 py-4 cursor-hover text-sm tracking-widest uppercase font-sans text-white/90">
                             Discover Formats
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
@@ -326,11 +355,11 @@
                     
                     <!-- Product 1 -->
                     <div class="flex-1 group cursor-hover product-card mt-0 md:mt-20">
-                        <!-- Kontainer dikembalikan menjadi kotak (segiempat mengikuti ratio) -->
-                        <div class="product-image-container aspect-[3/4] bg-[#080808]">
+                        <!-- Wrapper Kotak tapi bergelombang seperti air -->
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
                             
-                            <!-- Gambar dengan Filter Air Halus -->
+                            <!-- Gambar background dengan filter internal riak -->
                             <div class="product-image-bg absolute inset-0 opacity-60 bg-[url('https://ademiando.com/charcoal/gambar1.png')] bg-cover bg-center"></div>
                             
                             <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
@@ -349,7 +378,7 @@
                     
                     <!-- Product 2 -->
                     <div class="flex-1 group cursor-hover product-card">
-                        <div class="product-image-container aspect-[3/4] bg-[#080808]">
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
                             <div class="product-image-bg absolute inset-0 opacity-60 bg-[url('https://ademiando.com/charcoal/gambar2.png')] bg-cover bg-center"></div>
                             <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
@@ -368,7 +397,7 @@
                     
                     <!-- Product 3 -->
                     <div class="flex-1 group cursor-hover product-card mt-0 md:mt-32">
-                        <div class="product-image-container aspect-[3/4] bg-[#080808]">
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
                             <div class="product-image-bg absolute inset-0 opacity-60 bg-[url('https://ademiando.com/charcoal/gambar3.png')] bg-cover bg-center"></div>
                             <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
@@ -516,12 +545,11 @@
         function setMenuState(open) {
             isMenuOpen = open;
             
-            // Tambahkan class .is-splashing (efek kejut sesaat)
+            // Efek Splash (Riak kejut) saat diklik
             menuToggleBtn.classList.remove('is-splashing'); 
-            void menuToggleBtn.offsetWidth; // Trigger reflow untuk mereset animasi
+            void menuToggleBtn.offsetWidth; // Trigger reflow 
             menuToggleBtn.classList.add('is-splashing');
             
-            // Bersihkan class splash setelah animasi selesai (600ms)
             clearTimeout(splashTimeout);
             splashTimeout = setTimeout(() => {
                 menuToggleBtn.classList.remove('is-splashing');
@@ -714,7 +742,7 @@
             gsap.to('#products .word-inner', { y: 0, opacity: 1, rotate: 0, duration: 1, stagger: 0.1, ease: "power4.out", scrollTrigger: { trigger: '#products', start: "top 70%" } });
 
             gsap.from('.product-card', { y: 100, opacity: 0, duration: 1.2, stagger: 0.15, ease: "expo.out", scrollTrigger: { trigger: '.product-card', start: "top 85%" } });
-            gsap.from('.product-image-container', { scale: 1.1, duration: 1.5, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: '.product-card', start: "top 85%" } });
+            gsap.from('.liquid-image-wrapper', { scale: 1.1, duration: 1.5, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: '.product-card', start: "top 85%" } });
         };
     </script>
 </body>
