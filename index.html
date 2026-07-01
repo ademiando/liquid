@@ -1,0 +1,712 @@
+
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IGNITE | Premium Briquette Manufacturer</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: '#020202',
+                        brand: '#ff4400',
+                        ash: '#888888',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.module.js",
+                "three-rounded": "https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/geometries/RoundedBoxGeometry.js",
+                "three-effect": "https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/postprocessing/EffectComposer.js",
+                "three-renderpass": "https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/postprocessing/RenderPass.js",
+                "three-bloom": "https://cdn.jsdelivr.net/npm/three@0.140.0/examples/jsm/postprocessing/UnrealBloomPass.js"
+            }
+        }
+    </script>
+
+    <!-- GSAP & Lenis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.27/bundled/lenis.min.js"></script>
+
+    <style>
+        /* Pengaturan Dasar */
+        body {
+            background-color: #020202;
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .text-hero { font-size: clamp(3rem, 12vw, 12rem); line-height: 0.85; letter-spacing: -0.04em; }
+        .text-h2 { font-size: clamp(2.5rem, 6vw, 6rem); line-height: 1.1; letter-spacing: -0.02em; }
+        
+        .noise-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 10; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        #webgl-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none; }
+        .fog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #020202; z-index: -1; pointer-events: none; opacity: 0; }
+
+        /* Kursor */
+        .cursor-dot, .cursor-outline { position: fixed; top: 0; left: 0; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; z-index: 9999; }
+        .cursor-dot { width: 8px; height: 8px; background-color: white; }
+        .cursor-outline { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.5); transition: width 0.3s, height 0.3s, background-color 0.3s, border-color 0.3s; }
+        @media (pointer: coarse) { .cursor-dot, .cursor-outline { display: none; } }
+
+        #loader { position: fixed; inset: 0; background: #020202; z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        .loader-progress { position: absolute; bottom: 0; left: 0; height: 4px; background: #ff4400; width: 0%; }
+
+        /* --- ANIMASI CAIRAN HALUS (SMOOTH LIQUID) --- */
+        
+        /* 1. Animasi untuk Tombol (Menggunakan pixel agar presisi di ukuran kecil) */
+        @keyframes btn-wobble {
+            0%, 100% { border-radius: 35px 45px 35px 45px / 45px 35px 45px 35px; }
+            50% { border-radius: 45px 35px 45px 35px / 35px 45px 35px 45px; }
+        }
+        @keyframes btn-hover {
+            0%, 100% { border-radius: 30px 50px 30px 50px / 50px 30px 50px 30px; }
+            33% { border-radius: 50px 30px 45px 35px / 30px 50px 35px 45px; }
+            66% { border-radius: 35px 45px 50px 30px / 45px 35px 30px 50px; }
+        }
+
+        /* 2. Animasi untuk Wrapper Gambar (Menggunakan persen agar fluid mengikuti Aspect Ratio) */
+        @keyframes img-wobble {
+            0%, 100% { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
+            50% { border-radius: 55% 45% 55% 45% / 45% 55% 45% 55%; }
+        }
+        @keyframes img-hover {
+            0%, 100% { border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; }
+            33% { border-radius: 60% 40% 55% 45% / 40% 60% 45% 55%; }
+            66% { border-radius: 45% 55% 60% 40% / 55% 45% 40% 60%; }
+        }
+
+        /* --- STYLING TOMBOL CAIR --- */
+        .btn-liquid {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                inset 0 3px 6px -2px rgba(255, 255, 255, 0.5), 
+                inset 0 -3px 6px -2px rgba(0, 0, 0, 0.2), 
+                0 4px 10px rgba(0, 0, 0, 0.15); 
+            position: relative;
+            overflow: hidden;
+            animation: btn-wobble 4s ease-in-out infinite;
+            transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease, transform 0.2s ease;
+        }
+
+        .btn-liquid:hover {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            animation: btn-hover 2.5s ease-in-out infinite; /* Riakan bertambah sedikit, mulus */
+            box-shadow: 
+                inset 0 4px 12px -2px rgba(255, 255, 255, 0.8),
+                inset 0 -4px 8px -2px rgba(0, 0, 0, 0.3),
+                0 6px 15px rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .btn-liquid.menu-open {
+            background: rgba(255, 68, 0, 0.15);
+            border-color: rgba(255, 68, 0, 0.5);
+            animation: btn-hover 2s ease-in-out infinite; 
+            box-shadow: 
+                inset 0 4px 10px -2px rgba(255, 68, 0, 0.8),
+                inset 0 -4px 8px -2px rgba(0, 0, 0, 0.4),
+                0 6px 20px rgba(255, 68, 0, 0.2);
+            color: #ff4400;
+        }
+        .btn-liquid.menu-open span { color: #ff4400; font-weight: bold; }
+        .btn-liquid:active { transform: scale(0.95); }
+
+        .btn-liquid-dark {
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            box-shadow: inset 0 3px 6px -2px rgba(255, 255, 255, 0.2), inset 0 -3px 6px -2px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: btn-wobble 4.5s ease-in-out infinite reverse;
+            transition: all 0.4s ease;
+        }
+        .btn-liquid-dark:hover {
+            background: rgba(0, 0, 0, 0.15);
+            animation: btn-hover 3s ease-in-out infinite reverse;
+            box-shadow: inset 0 4px 10px -2px rgba(255, 255, 255, 0.4), inset 0 -4px 8px -2px rgba(0, 0, 0, 0.8), 0 6px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* --- STYLING GAMBAR BUNGKUSAN CAIRAN --- */
+        .liquid-image-wrapper {
+            border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; 
+            animation: img-wobble 8s ease-in-out infinite;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 10px 30px rgba(0,0,0,0.8), inset 0 -5px 20px rgba(255,255,255,0.05), 0 15px 30px rgba(0,0,0,0.4);
+            transform: translateZ(0); 
+            transition: all 0.6s ease-out;
+        }
+        .liquid-image-wrapper::after {
+            content: ''; position: absolute; inset: 0; border-radius: inherit;
+            box-shadow: inset 0 2px 15px rgba(255,255,255,0.15); pointer-events: none; z-index: 30; transition: inherit;
+        }
+        .product-card:hover .liquid-image-wrapper {
+            animation: img-hover 4s ease-in-out infinite;
+            box-shadow: inset 0 15px 40px rgba(0,0,0,0.9), inset 0 -5px 25px rgba(255,68,0,0.15), 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .product-image-bg {
+            filter: url('#water-ripple');
+            transform: scale(1.1); 
+            transition: filter 0.8s ease, opacity 0.8s ease, transform 0.8s ease;
+        }
+        .product-card:hover .product-image-bg {
+            filter: url('#water-ripple-hover'); 
+            transform: scale(1.15); 
+            opacity: 0.85;
+        }
+
+        #menu-overlay { clip-path: circle(0% at 100% 0%); transition: clip-path 1s cubic-bezier(0.77, 0, 0.175, 1); }
+        #menu-overlay.open { clip-path: circle(150% at 100% 0%); }
+        .nav-blend { mix-blend-mode: difference; }
+    </style>
+</head>
+<body>
+
+    <!-- FILTER SVG HALUS (Mengurangi beban GPU agar tidak ngeframe) -->
+    <svg style="width:0; height:0; position:absolute; z-index:-1;" aria-hidden="true">
+        <defs>
+            <filter id="water-ripple">
+                <!-- numOctaves="1" membuat render sangat ringan -->
+                <feTurbulence type="fractalNoise" baseFrequency="0.005" numOctaves="1" result="noise">
+                    <animate attributeName="baseFrequency" values="0.005; 0.01; 0.005" dur="10s" repeatCount="indefinite" />
+                </feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+            
+            <filter id="water-ripple-hover">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise">
+                    <animate attributeName="baseFrequency" values="0.01; 0.015; 0.01" dur="6s" repeatCount="indefinite" />
+                </feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G">
+                    <animate attributeName="scale" values="6; 10; 6" dur="3s" repeatCount="indefinite"/>
+                </feDisplacementMap>
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Loaders & Cursors -->
+    <div id="loader">
+        <div class="font-display text-2xl tracking-[0.3em] uppercase text-ash loader-text overflow-hidden">
+            <span class="inline-block translate-y-full mask-anim">Igniting...</span>
+        </div>
+        <div class="loader-progress" id="progress-bar"></div>
+    </div>
+    
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+    <div class="noise-bg"></div>
+
+    <!-- 3D Environment & Fog -->
+    <div id="webgl-container"></div>
+    <div class="fog-overlay" id="fog"></div>
+
+    <!-- Fullscreen Menu Overlay -->
+    <div id="menu-overlay" class="fixed inset-0 bg-[#0a0a0a] z-[60] flex flex-col justify-center items-center pointer-events-none">
+        <div class="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1549488344-c10ba48b1115?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-luminosity"></div>
+        <div class="flex flex-col gap-4 text-center z-10">
+            <a href="#hero" class="menu-item font-display text-3xl md:text-5xl uppercase text-brand hover:text-white transition-colors cursor-hover split-text block">Home</a>
+            <a href="#about" class="menu-item font-display text-3xl md:text-5xl uppercase text-brand hover:text-white transition-colors cursor-hover split-text block">Philosophy</a>
+            <a href="#products" class="menu-item font-display text-3xl md:text-5xl uppercase text-brand hover:text-white transition-colors cursor-hover split-text block">Formats</a>
+            <a href="#contact" class="menu-item font-display text-3xl md:text-5xl uppercase text-brand hover:text-white transition-colors cursor-hover split-text block">Contact</a>
+        </div>
+        <div class="absolute bottom-10 flex flex-col md:flex-row gap-4 md:gap-8 font-sans text-xs tracking-widest uppercase text-ash z-10 text-center">
+            <a href="mailto:sales@ignitebriq.com" class="hover:text-brand transition-colors cursor-hover">sales@ignitebriq.com</a>
+            <span class="hidden md:inline text-white/20">|</span>
+            <a href="tel:+6281234567890" class="hover:text-brand transition-colors cursor-hover">+62 812 3456 7890</a>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 w-full p-6 md:p-10 z-[70] flex justify-between items-center nav-blend">
+        <a href="#hero" class="font-display font-bold text-xl md:text-2xl tracking-tighter cursor-hover">IGNITE.</a>
+        
+        <div class="hidden md:flex items-center gap-10 font-sans text-xs tracking-[0.2em] uppercase font-medium">
+            <a href="#products" class="cursor-hover hover:text-brand transition-colors">Products</a>
+            <a href="#contact" class="magnetic-btn btn-liquid px-6 py-3 cursor-hover flex items-center gap-2 text-white/90 transition-all duration-300">
+                Get a Quote
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+
+        <button id="menu-toggle" class="magnetic-btn btn-liquid font-sans uppercase text-xs tracking-widest px-6 py-3 cursor-hover flex items-center gap-2 text-white/90 transition-all duration-300">
+            <span class="transition-colors duration-300">Menu</span>
+        </button>
+    </nav>
+
+    <main id="smooth-wrapper">
+        <div id="smooth-content">
+
+            <!-- 1. HERO SECTION -->
+            <section class="relative w-full h-screen flex flex-col justify-center items-center px-4 z-10" id="hero">
+                <div class="text-center mt-10 md:mt-20">
+                    <h1 class="font-display font-bold text-hero uppercase split-text" data-speed="0.8">
+                        The Core of<br>Perfect Heat.
+                    </h1>
+                    <p class="font-sans text-ash mt-6 md:mt-12 max-w-lg mx-auto text-xs md:text-sm tracking-[0.2em] uppercase leading-relaxed split-line" data-speed="1.1">
+                        100% Premium Coconut Shell Briquettes.<br>Engineered for endurance and purity.
+                    </p>
+                    <div class="mt-12 flex justify-center fade-in">
+                        <a href="#products" class="magnetic-btn btn-liquid inline-flex items-center gap-3 px-8 py-4 cursor-hover text-sm tracking-widest uppercase font-sans text-white/90">
+                            Discover Formats
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. STATEMENT SECTION -->
+            <section id="about" class="w-full min-h-[80vh] flex items-center bg-transparent px-6 md:px-20 z-20 relative pt-32">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="font-display text-h2 text-white/90 split-text mb-12">
+                        We don't merely supply charcoal. We forge the foundation of your experience. Ultra-dense, strictly chemical-free, burning consistently hotter and significantly longer.
+                    </h2>
+                    <a href="#about" class="magnetic-btn inline-flex items-center gap-4 text-brand font-sans uppercase tracking-widest text-sm cursor-hover group">
+                        <span class="group-hover:translate-x-2 transition-transform duration-300">Read Our Process</span>
+                        <span class="w-8 h-[1px] bg-brand group-hover:w-12 transition-all duration-300"></span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- 3. STATISTICS SECTION -->
+            <section class="w-full py-32 bg-transparent px-6 md:px-20 z-20 relative">
+                <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-10">
+                    <div class="border-t border-white/20 pt-8 stat-item">
+                        <h3 class="font-display text-5xl md:text-7xl text-brand mb-4">> 2.5H</h3>
+                        <p class="font-sans text-ash uppercase tracking-widest text-xs leading-relaxed">Consistent Burn Time without dropping temperature.</p>
+                    </div>
+                    <div class="border-t border-white/20 pt-8 stat-item">
+                        <h3 class="font-display text-5xl md:text-7xl text-white mb-4">< 2.5%</h3>
+                        <p class="font-sans text-ash uppercase tracking-widest text-xs leading-relaxed">Ultra Low White Ash. Keeps your environment pristine.</p>
+                    </div>
+                    <div class="border-t border-white/20 pt-8 stat-item">
+                        <h3 class="font-display text-5xl md:text-7xl text-white mb-4">0%</h3>
+                        <p class="font-sans text-ash uppercase tracking-widest text-xs leading-relaxed">Chemical Additives. Pure coconut shell composition.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PRODUCTS SHOWCASE -->
+            <section id="products" class="w-full py-32 bg-transparent z-20 relative overflow-hidden">
+                <div class="px-6 md:px-20 mb-16 md:mb-24 flex flex-col md:flex-row justify-between items-end gap-6">
+                    <h2 class="font-display text-h2 uppercase split-text">Crafted<br>Formats.</h2>
+                    <a href="https://ademiando.com/charcoal/catalog.pdf" download="Ignite_Catalog.pdf" target="_blank" class="magnetic-btn btn-liquid px-6 py-3 cursor-hover text-xs tracking-[0.2em] uppercase font-sans mb-2 text-white/90">
+                        Download Catalog
+                    </a>
+                </div>
+                
+                <div class="flex flex-col md:flex-row px-6 md:px-20 gap-8 md:gap-10">
+                    
+                    <div class="flex-1 group cursor-hover product-card mt-0 md:mt-20">
+                        <!-- Wrapper Liquid -->
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
+                            
+                            <!-- Gambar dengan Filter Air Halus -->
+                            <div class="product-image-bg absolute inset-0 opacity-50 bg-[url('https://ademiando.com/charcoal/gambar1.png')] bg-cover bg-center"></div>
+                            
+                            <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
+                                <span class="font-sans text-[10px] tracking-[0.2em] text-brand uppercase mb-2 block drop-shadow-md">Shisha Perfect</span>
+                                <h3 class="font-display text-3xl md:text-4xl mb-4 text-white drop-shadow-md">CUBE 25</h3>
+                                <div class="w-full h-[1px] bg-white/30 mb-4 group-hover:bg-brand transition-colors duration-500"></div>
+                                <div class="flex justify-between items-center">
+                                    <p class="font-sans text-xs text-white/80">25x25x25mm</p>
+                                    <div class="magnetic-btn btn-liquid w-8 h-8 flex items-center justify-center text-white pointer-events-auto">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 group cursor-hover product-card">
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
+                            <div class="product-image-bg absolute inset-0 opacity-50 bg-[url('https://ademiando.com/charcoal/gambar2.png')] bg-cover bg-center"></div>
+                            <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
+                                <span class="font-sans text-[10px] tracking-[0.2em] text-brand uppercase mb-2 block drop-shadow-md">Grill Champion</span>
+                                <h3 class="font-display text-3xl md:text-4xl mb-4 text-white drop-shadow-md">HEXAGONAL</h3>
+                                <div class="w-full h-[1px] bg-white/30 mb-4 group-hover:bg-brand transition-colors duration-500"></div>
+                                <div class="flex justify-between items-center">
+                                    <p class="font-sans text-xs text-white/80">Up to 4 Hours</p>
+                                    <div class="magnetic-btn btn-liquid w-8 h-8 flex items-center justify-center text-white pointer-events-auto">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 group cursor-hover product-card mt-0 md:mt-32">
+                        <div class="liquid-image-wrapper aspect-[3/4] bg-[#080808]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10 pointer-events-none"></div>
+                            <div class="product-image-bg absolute inset-0 opacity-50 bg-[url('https://ademiando.com/charcoal/gambar3.png')] bg-cover bg-center"></div>
+                            <div class="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
+                                <span class="font-sans text-[10px] tracking-[0.2em] text-brand uppercase mb-2 block drop-shadow-md">Traditional Hookah</span>
+                                <h3 class="font-display text-3xl md:text-4xl mb-4 text-white drop-shadow-md">FINGER</h3>
+                                <div class="w-full h-[1px] bg-white/30 mb-4 group-hover:bg-brand transition-colors duration-500"></div>
+                                <div class="flex justify-between items-center">
+                                    <p class="font-sans text-xs text-white/80">Below 2.0% Ash</p>
+                                    <div class="magnetic-btn btn-liquid w-8 h-8 flex items-center justify-center text-white pointer-events-auto">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. FOOTER / BIG CTA -->
+            <footer id="contact" class="w-full relative z-20 mt-32">
+                <div class="absolute top-0 left-0 w-full h-[200px] bg-gradient-to-b from-transparent to-[#ff4400] -translate-y-full pointer-events-none"></div>
+                
+                <div class="bg-[#ff4400] text-[#020202] pt-10 pb-20 md:pb-32 px-6 md:px-20 relative w-full">
+                    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-16">
+                        <div class="w-full md:w-2/3 group cursor-hover">
+                            <p class="font-sans font-bold uppercase tracking-[0.2em] mb-6 text-sm flex items-center gap-4">
+                                Start your inquiry 
+                                <span class="w-8 h-[1px] bg-black group-hover:w-16 transition-all duration-300"></span>
+                            </p>
+                            <h2 class="font-display font-bold text-[clamp(4rem,10vw,12rem)] leading-[0.8] tracking-tighter transition-transform duration-500 group-hover:translate-x-6">
+                                LET'S<br>BURN.
+                            </h2>
+                        </div>
+                        <div class="flex flex-col gap-6 font-sans text-sm font-medium">
+                            <a href="mailto:sales@ignitebriq.com" class="magnetic-btn btn-liquid-dark text-[#020202] px-8 py-4 cursor-hover flex items-center justify-between gap-4 w-full md:w-auto font-semibold">
+                                sales@ignitebriq.com
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </a>
+                            <a href="tel:+6281234567890" class="magnetic-btn btn-liquid-dark text-[#020202] px-8 py-4 cursor-hover flex items-center justify-between gap-4 w-full md:w-auto font-semibold">
+                                +62 812 3456 7890
+                            </a>
+                            <div class="mt-8 pt-6 border-t border-black/20">
+                                <p class="opacity-70 text-xs uppercase tracking-widest">© 2024 Ignite Charcoal.</p>
+                                <p class="opacity-70 text-xs uppercase tracking-widest mt-1">Global Premium Supplier.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+        </div>
+    </main>
+
+    <!-- SCRIPT UTAMA -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { RoundedBoxGeometry } from 'three-rounded';
+        import { EffectComposer } from 'three-effect';
+        import { RenderPass } from 'three-renderpass';
+        import { UnrealBloomPass } from 'three-bloom';
+
+        // Utility Reveal Teks
+        function setupTextReveal() {
+            document.querySelectorAll('.split-text').forEach(el => {
+                const text = el.innerText;
+                el.innerHTML = '';
+                text.split(' ').forEach(word => {
+                    const wordWrap = document.createElement('span');
+                    wordWrap.className = 'inline-block overflow-hidden align-bottom pb-2 mr-2 md:mr-4';
+                    const wordInner = document.createElement('span');
+                    wordInner.className = 'inline-block word-inner translate-y-[110%] opacity-0 rotate-2';
+                    wordInner.innerText = word;
+                    wordWrap.appendChild(wordInner);
+                    el.appendChild(wordWrap);
+                });
+            });
+
+            document.querySelectorAll('.split-line').forEach(el => {
+                const html = el.innerHTML;
+                el.innerHTML = '';
+                html.split('<br>').forEach(line => {
+                    const lineWrap = document.createElement('span');
+                    lineWrap.className = 'block overflow-hidden pb-1';
+                    const lineInner = document.createElement('span');
+                    lineInner.className = 'block line-inner translate-y-[110%] opacity-0';
+                    lineInner.innerHTML = line.trim();
+                    lineWrap.appendChild(lineInner);
+                    el.appendChild(lineWrap);
+                });
+            });
+        }
+        setupTextReveal();
+
+        // Kursor & Tombol Magnetik
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        
+        window.addEventListener('mousemove', (e) => {
+            gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.1 });
+            gsap.to(cursorOutline, { x: e.clientX, y: e.clientY, duration: 0.5, ease: "power2.out" });
+        });
+
+        document.querySelectorAll('.cursor-hover').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                gsap.to(cursorOutline, { scale: 1.5, backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'transparent', duration: 0.3 });
+                gsap.to(cursorDot, { scale: 0, duration: 0.3 });
+            });
+            el.addEventListener('mouseleave', () => {
+                gsap.to(cursorOutline, { scale: 1, backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.5)', duration: 0.3 });
+                gsap.to(cursorDot, { scale: 1, duration: 0.3 });
+            });
+        });
+
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3, ease: 'power2.out' });
+            });
+            btn.addEventListener('mouseleave', () => {
+                gsap.to(btn, { x: 0, y: 0, duration: 0.7, ease: 'elastic.out(1, 0.3)' });
+            });
+        });
+
+        // Lenis Smooth Scroll
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // --- Logika Menu Overlay ---
+        const menuToggleBtn = document.getElementById('menu-toggle');
+        const menuOverlay = document.getElementById('menu-overlay');
+        let isMenuOpen = false;
+
+        function setMenuState(open) {
+            isMenuOpen = open;
+            if (isMenuOpen) {
+                menuToggleBtn.classList.add('menu-open');
+                menuOverlay.classList.add('open');
+                menuOverlay.classList.remove('pointer-events-none');
+                
+                const span = menuToggleBtn.querySelector('span');
+                gsap.to(span, { y: -20, opacity: 0, duration: 0.2, onComplete: () => {
+                    span.innerText = 'CLOSE';
+                    gsap.fromTo(span, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.2 });
+                }});
+                
+                gsap.killTweensOf('#menu-overlay .word-inner');
+                gsap.to('#menu-overlay .word-inner', { 
+                    y: 0, opacity: 1, rotate: 0, duration: 0.8, stagger: 0.08, ease: 'power4.out', delay: 0.2
+                });
+                lenis.stop(); 
+            } else {
+                menuToggleBtn.classList.remove('menu-open');
+                menuOverlay.classList.remove('open');
+                menuOverlay.classList.add('pointer-events-none');
+                
+                const span = menuToggleBtn.querySelector('span');
+                gsap.to(span, { y: 20, opacity: 0, duration: 0.2, onComplete: () => {
+                    span.innerText = 'MENU';
+                    gsap.fromTo(span, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.2 });
+                }});
+                
+                gsap.killTweensOf('#menu-overlay .word-inner');
+                gsap.set('#menu-overlay .word-inner', { y: '110%', opacity: 0, rotate: 2 });
+                lenis.start();
+            }
+        }
+
+        menuToggleBtn.addEventListener('click', () => { setMenuState(!isMenuOpen); });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    if (isMenuOpen) setMenuState(false);
+                    setTimeout(() => { lenis.scrollTo(targetElement, { offset: 0, duration: 1.5 }); }, isMenuOpen ? 400 : 0);
+                }
+            });
+        });
+
+        // 3D Background Setup
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020202, 0.04);
+        const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 2, 25); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.3;
+        container.appendChild(renderer.domElement);
+
+        function createRealisticTextures() {
+            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, 1024, 1024);
+            for(let i=0; i<15000; i++) {
+                ctx.fillStyle = Math.random() > 0.8 ? '#1a1a1a' : '#030303';
+                ctx.fillRect(Math.random()*1024, Math.random()*1024, Math.random()*4, Math.random()*4);
+            }
+            const eCanvas = document.createElement('canvas'); eCanvas.width = 1024; eCanvas.height = 1024;
+            const eCtx = eCanvas.getContext('2d');
+            eCtx.fillStyle = '#000000'; eCtx.fillRect(0, 0, 1024, 1024);
+            for(let i=0; i<30; i++) {
+                eCtx.beginPath();
+                let startX = Math.random()*1024; let startY = Math.random()*1024;
+                eCtx.moveTo(startX, startY);
+                for(let j=0; j<5; j++) {
+                    startX += (Math.random()-0.5)*150; startY += (Math.random()-0.5)*150;
+                    eCtx.lineTo(startX, startY);
+                }
+                eCtx.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#ff4400';
+                eCtx.lineWidth = Math.random() * 8 + 1;
+                eCtx.shadowColor = '#ff2200'; eCtx.shadowBlur = 20; eCtx.stroke();
+            }
+            return { base: new THREE.CanvasTexture(canvas), glow: new THREE.CanvasTexture(eCanvas) };
+        }
+        
+        const tex = createRealisticTextures();
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0x111111, roughness: 0.95, metalness: 0.05,
+            map: tex.base, bumpMap: tex.base, bumpScale: 0.1,
+            emissiveMap: tex.glow, emissive: new THREE.Color(0xff2200), emissiveIntensity: 1.5
+        });
+
+        const geo = new RoundedBoxGeometry(3, 3, 3, 6, 0.2);
+        const briquetteGroup = new THREE.Group();
+        const briquettes = []; 
+
+        const positions = [
+            {x: -1.6, y: -1.5, z: 1.5, rotY: 0.2, rotZ: 0.1},
+            {x: 1.6, y: -1.5, z: 1.0, rotY: -0.3, rotZ: -0.1},
+            {x: 0.0, y: -1.5, z: -1.5, rotY: 0.5, rotZ: 0.0},
+            {x: -1.0, y: 1.4, z: 0.5, rotY: 0.8, rotZ: -0.05},
+            {x: 1.0, y: 1.2, z: -0.5, rotY: -0.6, rotZ: 0.1},
+            {x: 0.0, y: 4.0, z: 0.0, rotY: 0.1, rotZ: 0.2}
+        ];
+
+        positions.forEach(p => {
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(p.x, p.y, p.z);
+            mesh.rotation.set(Math.random()*0.2, p.rotY, p.rotZ);
+            const s = 0.95 + Math.random() * 0.1; mesh.scale.set(s,s,s);
+            briquettes.push({ mesh, originPos: new THREE.Vector3(p.x, p.y, p.z) });
+            briquetteGroup.add(mesh);
+        });
+        scene.add(briquetteGroup);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.05));
+        const coreLight = new THREE.PointLight(0xff3300, 4, 15); scene.add(coreLight);
+        const keyLight = new THREE.DirectionalLight(0xaaccff, 0.8); keyLight.position.set(5, 10, 5); scene.add(keyLight);
+
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.2; bloomPass.strength = 1.8; bloomPass.radius = 0.5;
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene); composer.addPass(bloomPass);
+
+        const clock = new THREE.Clock();
+        function render3D() {
+            const t = clock.getElapsedTime();
+            briquetteGroup.position.y = Math.sin(t * 0.8) * 0.3;
+            coreLight.intensity = 3 + Math.sin(t * 6) * 1.5;
+            mat.emissiveIntensity = 1.5 + Math.sin(t * 4) * 0.5;
+            composer.render();
+            requestAnimationFrame(render3D);
+        }
+        render3D();
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth; const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.fov = width < 768 ? 55 : 35;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height); composer.setSize(width, height);
+        });
+
+        gsap.registerPlugin(ScrollTrigger);
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time)=>{ lenis.raf(time * 1000) });
+        gsap.ticker.lagSmoothing(0);
+
+        window.onload = () => {
+            const tlLoader = gsap.timeline();
+            tlLoader.to('#progress-bar', { width: '100%', duration: 1.5, ease: "power3.inOut" })
+            .to('.mask-anim', { y: 0, duration: 0.6, ease: "power3.out" }, "-=0.5")
+            .to('.mask-anim', { y: '-110%', duration: 0.6, ease: "power3.in", delay: 0.2 })
+            .to('#loader', { yPercent: -100, duration: 1, ease: "expo.inOut" })
+            .to('.word-inner', { y: 0, opacity: 1, rotate: 0, duration: 1.2, stagger: 0.05, ease: "power4.out" }, "-=0.5")
+            .to('.line-inner', { y: 0, opacity: 1, duration: 1, stagger: 0.1, ease: "power3.out" }, "-=0.8")
+            .fromTo('.fade-in', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1 }, "-=0.5");
+
+            const tl3D = gsap.timeline({ scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: 1.5 } });
+            tl3D.to(briquetteGroup.rotation, { x: 0.5, y: Math.PI, ease: "none" }, 0);
+            tl3D.to(briquetteGroup.position, { z: -15, y: 5, ease: "none" }, 0);
+            briquettes.forEach((item) => {
+                tl3D.to(item.mesh.position, { x: item.originPos.x * 2, y: item.originPos.y * 1.5, ease: "power1.inOut" }, 0);
+            });
+
+            gsap.to('#fog', { opacity: 0.85, scrollTrigger: { trigger: "#about", start: "top 80%", end: "top 20%", scrub: true } });
+            gsap.to('#fog', { opacity: 0.05, scrollTrigger: { trigger: "#products", start: "top bottom", end: "center center", scrub: 1.2 } });
+
+            const tlProducts = gsap.timeline({ scrollTrigger: { trigger: "#products", start: "top bottom", end: "center center", scrub: 1.2 } });
+            tlProducts.to(briquetteGroup.position, { z: 11, y: -0.5, ease: "power3.out" }, 0);
+            tlProducts.to(briquetteGroup.rotation, { x: 0.3, y: Math.PI * 1.8, ease: "power1.inOut" }, 0);
+            tlProducts.to(coreLight, { intensity: 10, distance: 25 }, 0);
+            tlProducts.to(mat, { emissiveIntensity: 3.0 }, 0);
+
+            gsap.utils.toArray('#about .word-inner').forEach(word => {
+                gsap.to(word, { y: 0, opacity: 1, rotate: 0, ease: "power3.out", scrollTrigger: { trigger: word, start: "top 95%", end: "top 70%", scrub: 1 } });
+            });
+
+            gsap.from('.stat-item', { y: 50, opacity: 0, duration: 1, stagger: 0.2, ease: "power3.out", scrollTrigger: { trigger: '.stat-item', start: "top 85%" } });
+
+            gsap.to('#products .word-inner', { y: 0, opacity: 1, rotate: 0, duration: 1, stagger: 0.1, ease: "power4.out", scrollTrigger: { trigger: '#products', start: "top 70%" } });
+
+            gsap.from('.product-card', { y: 100, opacity: 0, duration: 1.2, stagger: 0.15, ease: "expo.out", scrollTrigger: { trigger: '.product-card', start: "top 85%" } });
+            gsap.from('.product-image-bg', { scale: 1.5, duration: 1.5, stagger: 0.15, ease: "power3.out", scrollTrigger: { trigger: '.product-card', start: "top 85%" } });
+        };
+    </script>
+</body>
+</html>
